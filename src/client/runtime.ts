@@ -14,6 +14,8 @@ import { getDocumentLocale, t, type ShareLocale } from './i18n.ts'
 import { createShareMarkdown } from './markdown.ts'
 import { createShareHtml } from './html.ts'
 import { mountDownloadFormat, type DownloadFormat } from './download-format.ts'
+import { createSecretGist } from './gist.ts'
+import { GistDialog } from './gist-dialog.ts'
 import {
   PreviewDialog,
   downloadMarkdownFile,
@@ -169,6 +171,7 @@ export function createShareRuntime(document: Document, options: InstallOptions =
   let renderRunning = false
   let settingsRenderTimer: number | undefined
   let dialog: PreviewDialog | undefined
+  let gistDialog: GistDialog | undefined
   const selections = new Map<string, SessionSelection>()
 
   const preserveScrollPosition = (scroll: HTMLElement, scrollTop: number): void => {
@@ -231,6 +234,8 @@ export function createShareRuntime(document: Document, options: InstallOptions =
       const count = controller.footer.querySelector<HTMLElement>('[data-dsh-share-selection-count]')
       const cancel = controller.footer.querySelector<HTMLButtonElement>('[data-dsh-share-selection-cancel]')
       const download = controller.footer.querySelector<HTMLButtonElement>('[data-dsh-share-selection-download]')
+      const gistShare = controller.footer.querySelector<HTMLButtonElement>('[data-dsh-share-selection-gist]')
+      const gistManage = controller.footer.querySelector<HTMLButtonElement>('[data-dsh-share-selection-gist-manage]')
       const create = controller.footer.querySelector<HTMLButtonElement>('[data-dsh-share-selection-create]')
       if (all) {
         all.setAttribute('aria-checked', String(controller.snapshot.allSelected))
@@ -242,12 +247,23 @@ export function createShareRuntime(document: Document, options: InstallOptions =
       if (count && count.textContent !== nextCount) count.textContent = nextCount
       if (cancel && cancel.textContent !== strings.cancelSelection) cancel.textContent = strings.cancelSelection
       if (download) updateResponsiveLabel(download, strings.downloadFile, strings.downloadFile)
+      if (gistShare) {
+        updateResponsiveLabel(gistShare, strings.shareGist, strings.shareGist)
+        gistShare.title = strings.shareGistTooltip
+      }
+      if (gistManage) {
+        gistManage.textContent = strings.manageGists
+        gistManage.title = strings.manageGistsTooltip
+      }
       if (create) {
         updateResponsiveLabel(create, strings.createSelection, strings.createSelectionCompact)
       }
       if (download) {
         download.disabled = controller.selected.size === 0 || download.dataset.busy === 'true'
         controller.downloadFormat?.update(currentLocale(), download.disabled)
+      }
+      if (gistShare) {
+        gistShare.disabled = controller.selected.size === 0 || gistShare.dataset.busy === 'true'
       }
       if (create) create.disabled = controller.selected.size === 0
     }
@@ -564,7 +580,64 @@ export function createShareRuntime(document: Document, options: InstallOptions =
         if (controller.footer === footer) controller.downloadFormat?.update(currentLocale(), download.disabled)
       }
     })
-    inner.append(selectAll, divider, count, cancel, downloadGroup, create, htmlStatus)
+
+    const gistGroup = document.createElement('div')
+    gistGroup.dataset.dshShareGistGroup = ''
+    gistGroup.style.display = 'inline-flex'
+    gistGroup.style.alignItems = 'center'
+    gistGroup.style.gap = '6px'
+
+    const gistShare = makeButton(document, 'dshShareSelectionGist')
+    appendResponsiveLabel(document, gistShare, strings.shareGist, strings.shareGist)
+    gistShare.title = strings.shareGistTooltip
+
+    const gistManage = makeButton(document, 'dshShareSelectionGistManage')
+    gistManage.textContent = strings.manageGists
+    gistManage.title = strings.manageGistsTooltip
+    gistManage.addEventListener('click', () => {
+      ensureGistDialog().open()
+    })
+
+    gistShare.addEventListener('click', async () => {
+      if (gistShare.dataset.busy === 'true') return
+      const messages = selectedTurnsToShareMessages(controller.selected.values())
+      if (!messages.length) return
+      const gistDlg = ensureGistDialog()
+      if (!gistDlg.token) {
+        gistDlg.open()
+        return
+      }
+      const locale = currentLocale()
+      const title = controller.title
+      gistShare.dataset.busy = 'true'
+      gistShare.disabled = true
+      htmlStatus.textContent = t(locale).gistCreating
+
+      try {
+        const markdown = createShareMarkdown(messages, locale, ensureDialog().settings)
+        const result = await createSecretGist(gistDlg.token, { title, markdown })
+        if (!footer.isConnected) return
+        try {
+          await document.defaultView?.navigator.clipboard?.writeText(result.htmlUrl)
+          htmlStatus.textContent = `${t(locale).gistCreated} (${result.htmlUrl})`
+        } catch {
+          htmlStatus.textContent = `${t(locale).gistCreated} ${result.htmlUrl}`
+        }
+      } catch (error) {
+        if (!footer.isConnected) return
+        const message = error instanceof Error ? error.message : String(error)
+        htmlStatus.textContent = `${t(locale).gistFailed}: ${message}`
+        if (message.includes('Bad credentials') || message.includes('Missing GitHub token')) {
+          gistDlg.open()
+        }
+      } finally {
+        delete gistShare.dataset.busy
+        gistShare.disabled = controller.selected.size === 0
+      }
+    })
+
+    gistGroup.append(gistShare, gistManage)
+    inner.append(selectAll, divider, count, cancel, downloadGroup, create, gistGroup, htmlStatus)
     footer.append(inner)
     return footer
   }
@@ -676,6 +749,14 @@ export function createShareRuntime(document: Document, options: InstallOptions =
       },
     })
     return dialog
+  }
+
+  function ensureGistDialog(): GistDialog {
+    if (gistDialog) return gistDialog
+    gistDialog = new GistDialog(document, {
+      getLocale: currentLocale,
+    })
+    return gistDialog
   }
 
   const directSingleTurnEnabled = (): boolean => {
@@ -791,6 +872,8 @@ export function createShareRuntime(document: Document, options: InstallOptions =
       style.remove()
       dialog?.destroy()
       dialog = undefined
+      gistDialog?.destroy()
+      gistDialog = undefined
     },
   }
 }

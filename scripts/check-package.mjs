@@ -7,7 +7,10 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
 const EXPECTED_NAME = 'dsh-share'
-const EXPECTED_REPOSITORY = 'git+https://github.com/hellodigua/dsh-share.git'
+const EXPECTED_REPOSITORIES = [
+  'git+https://github.com/luckykong/dsh-share.git',
+  'git+https://github.com/hellodigua/dsh-share.git',
+]
 const NPM_REGISTRY = 'https://registry.npmjs.org/'
 const MAX_TARBALL_SIZE = 1024 * 1024
 const RELEASE_SEMVER_PATTERN = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?$/
@@ -51,10 +54,10 @@ export function validatePackageManifest(packageJson) {
   if (packageJson.name !== EXPECTED_NAME) fail(`package name 必须是 ${EXPECTED_NAME}`)
   validateReleaseVersion(packageJson.version)
   if (packageJson.private !== undefined) fail('发布包不能声明 private')
-  if (packageJson.author !== 'hellodigua') fail('package author 必须是 hellodigua')
+  if (!['hellodigua', 'luckykong'].includes(packageJson.author)) fail('package author 必须是 luckykong 或 hellodigua')
   if (packageJson.license !== 'MIT') fail('package license 必须是 MIT')
-  if (packageJson.repository?.url !== EXPECTED_REPOSITORY) {
-    fail(`repository 必须是 ${EXPECTED_REPOSITORY}`)
+  if (!EXPECTED_REPOSITORIES.includes(packageJson.repository?.url)) {
+    fail(`repository 必须是 ${EXPECTED_REPOSITORIES.join(' 或 ')}`)
   }
   if (packageJson.publishConfig?.access !== 'public') fail('publishConfig.access 必须是 public')
   if (packageJson.publishConfig?.registry !== NPM_REGISTRY) {

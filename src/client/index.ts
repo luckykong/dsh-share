@@ -150,3 +150,14 @@ export {
   type ShareSettings,
   type WidthPreset,
 } from './settings.ts'
+export {
+  createSecretGist,
+  listSecretGists,
+  deleteGist,
+  loadGithubToken,
+  saveGithubToken,
+  clearGithubToken,
+  type GistItem,
+  type CreateGistOptions,
+} from './gist.ts'
+export { GistDialog } from './gist-dialog.ts'

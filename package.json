@@ -1,22 +1,23 @@
 {
   "name": "dsh-share",
-  "version": "0.5.0",
-  "description": "Share DSH Q&As or selected conversation groups as PNG or Markdown.",
-  "author": "hellodigua",
+  "version": "0.6.0",
+  "description": "Share DSH Q&As or selected conversation groups as PNG, Markdown or secret GitHub Gists.",
+  "author": "luckykong",
   "keywords": [
     "deepseek-harness",
     "dsh",
     "plugin",
     "share-image",
-    "screenshot"
+    "screenshot",
+    "gist"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hellodigua/dsh-share.git"
+    "url": "git+https://github.com/luckykong/dsh-share.git"
   },
-  "homepage": "https://github.com/hellodigua/dsh-share#readme",
+  "homepage": "https://github.com/luckykong/dsh-share#readme",
   "bugs": {
-    "url": "https://github.com/hellodigua/dsh-share/issues"
+    "url": "https://github.com/luckykong/dsh-share/issues"
   },
   "type": "module",
   "main": "lib/index.js",

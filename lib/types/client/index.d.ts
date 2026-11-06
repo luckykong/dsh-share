@@ -26,4 +26,6 @@ export { findTurnContent, findTurnContentFromAction } from './dom.ts';
 export { renderShareImage, type ImageRenderer } from './preview-dialog.ts';
 export { createShareRuntime, type InstallOptions, type ShareRuntime, type ShareSelectionSnapshot, } from './runtime.ts';
 export { DEFAULT_SHARE_SETTINGS, FONT_SIZE_PRESETS, loadShareSettings, saveShareSettings, WIDTH_PRESETS, type FontSizePreset, type ShareSettings, type WidthPreset, } from './settings.ts';
+export { createSecretGist, listSecretGists, deleteGist, loadGithubToken, saveGithubToken, clearGithubToken, type GistItem, type CreateGistOptions, } from './gist.ts';
+export { GistDialog } from './gist-dialog.ts';
 //# sourceMappingURL=index.d.ts.map

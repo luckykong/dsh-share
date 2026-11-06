@@ -54,6 +54,29 @@ export interface Translation {
   normal: string
   large: string
   xlarge: string
+  shareGist: string
+  shareGistTooltip: string
+  manageGists: string
+  manageGistsTooltip: string
+  gistTitle: string
+  gistTokenLabel: string
+  gistTokenPlaceholder: string
+  gistSaveToken: string
+  gistChangeToken: string
+  gistClearToken: string
+  gistTokenHelp: string
+  gistCreating: string
+  gistCreated: string
+  gistFailed: string
+  gistLoading: string
+  gistEmpty: string
+  gistDelete: string
+  gistDeleting: string
+  gistDeleted: string
+  gistDeleteConfirm: (title: string) => string
+  gistOpen: string
+  gistCopyLink: string
+  gistLinkCopied: string
 }
 export function getDocumentLocale(document: Document): ShareLocale {
   return normalizeShareLocale(document.documentElement.lang)
@@ -111,6 +134,29 @@ export function t(locale: ShareLocale): Translation {
       normal: '标准',
       large: '大',
       xlarge: '超大',
+      shareGist: '分享为 Gist',
+      shareGistTooltip: '发布为机密 Gist 并复制链接',
+      manageGists: 'Gist 记录',
+      manageGistsTooltip: '查看并管理已分享的 Gist 列表',
+      gistTitle: 'GitHub Gist 分享管理',
+      gistTokenLabel: 'GitHub Token (需包含 gist 权限)',
+      gistTokenPlaceholder: '请输入 Personal Access Token',
+      gistSaveToken: '保存 Token',
+      gistChangeToken: '更换 Token',
+      gistClearToken: '清除 Token',
+      gistTokenHelp: 'Token 仅保存在本地浏览器中，用于以你的 GitHub 账号创建和删除机密 Gist。',
+      gistCreating: '正在发布到 GitHub Gist…',
+      gistCreated: '已成功发布为机密 Gist，链接已复制！',
+      gistFailed: '发布到 Gist 失败，请检查 Token 或网络。',
+      gistLoading: '正在加载 Gist 列表…',
+      gistEmpty: '暂无通过 DSH 分享的 Gist 记录。',
+      gistDelete: '彻底删除',
+      gistDeleting: '正在删除…',
+      gistDeleted: 'Gist 已彻底删除。',
+      gistDeleteConfirm: title => `确定要彻底删除 Gist「${title}」吗？删除后此链接将永久失效 (404)。`,
+      gistOpen: '打开',
+      gistCopyLink: '复制链接',
+      gistLinkCopied: '链接已复制',
     }
   }
   return {
@@ -163,5 +209,28 @@ export function t(locale: ShareLocale): Translation {
     normal: 'Normal',
     large: 'Large',
     xlarge: 'Extra Large',
+    shareGist: 'Share to Gist',
+    shareGistTooltip: 'Publish as secret Gist and copy link',
+    manageGists: 'Gists',
+    manageGistsTooltip: 'Manage shared Gist list',
+    gistTitle: 'GitHub Gist Management',
+    gistTokenLabel: 'GitHub Token (requires gist scope)',
+    gistTokenPlaceholder: 'Enter your Personal Access Token',
+    gistSaveToken: 'Save Token',
+    gistChangeToken: 'Change Token',
+    gistClearToken: 'Clear Token',
+    gistTokenHelp: 'Token is saved only in your local browser to create and delete secret Gists under your account.',
+    gistCreating: 'Publishing to GitHub Gist…',
+    gistCreated: 'Published as secret Gist! Link copied to clipboard.',
+    gistFailed: 'Failed to publish to Gist. Check token or network.',
+    gistLoading: 'Loading Gist list…',
+    gistEmpty: 'No Gists shared from DSH yet.',
+    gistDelete: 'Delete',
+    gistDeleting: 'Deleting…',
+    gistDeleted: 'Gist permanently deleted.',
+    gistDeleteConfirm: title => `Are you sure you want to permanently delete "${title}"? The link will become a 404.`,
+    gistOpen: 'Open',
+    gistCopyLink: 'Copy Link',
+    gistLinkCopied: 'Link copied',
   }
 }

@@ -19,6 +19,7 @@ Adjust the image width, font size, and process visibility before downloading or 
 - Shows linked checkboxes beside both the question and answer, lets you click content to select a group, and supports non-contiguous selection
 - Keeps a checkbox visible while scrolling through long content, then lets it leave at that question or answer's boundary
 - Supports image copy, PNG download, and Markdown download
+- Supports one-click sharing as a secret GitHub Gist with link auto-copied to the clipboard, saved under your own GitHub account. Includes a “Gists” management dialog to view shared Gists, copy links, or permanently delete them (returning a 404). Your token is saved only in the local browser and requires only the minimal gist scope.
 - Downloads use `dsh-conversation title`, with `-01`, `-02`, etc. for multiple images. Invalid filename characters are sanitized, long titles are shortened, and a timestamp is used when no title is available.
 - In selection mode, choose Markdown or HTML from the format menu next to Download, then download the selected format. Create image remains a separate action. HTML uses a lightweight conversation layout, user bubbles, and core official Markdown styling, preserving available theme color snapshots. Text, code, and tables work offline; images and emoji are embedded where possible, with placeholders for unavailable images. Host scripts, interactive controls, and internal identifiers are excluded. Non-raster images such as SVG are not embedded.
 - Packs complete Q&A groups in order into PNGs: while the current page is below 4096 CSS pixels, it accepts the next complete group; a new page starts once the target is reached or exceeded. Supports per-page preview, copy, and download. “Download all” saves one ZIP containing every numbered PNG, with a 512 MiB limit on total image size. A final page containing just one group and measuring less than 1024 CSS pixels is merged into the previous page. Selecting only one group keeps a single page. Pages may exceed the target height without cropping content.
@@ -26,6 +27,12 @@ Adjust the image width, font size, and process visibility before downloading or 
 - Preserves Markdown, code blocks, tables, images, and tool call summaries
 - Supports adjustable image widths and font sizes, with a scrollable preview for long images
 - Can hide reasoning and tool calls, leaving only the question and final answer
+
+### GitHub Gist Sharing & Management
+
+- **Secret Gist Sharing**: Share selected conversations as Markdown to an unlisted, unindexed secret Gist with one click; the link is automatically copied to your clipboard.
+- **Owned by Your Account**: Created directly under your personal GitHub account using a local Personal Access Token (requires only minimal `gist` scope), safely stored in local browser storage without third-party proxying.
+- **Management & Permanent Deletion**: Includes a built-in management panel to inspect all shared Gists, copy links, or permanently delete them (the link immediately returns 404). Features aggressive cache-busting and immediate deletion state synchronization.
 
 Performance testing: Everyday chat keeps only the lightweight share actions. Selection processing and image generation start only when sharing, with optimizations for multi-turn conversations.
 
@@ -42,7 +49,7 @@ dsh plugin --profile web add dsh-share
 Install a specific GitHub version:
 
 ```sh
-dsh plugin --profile web add github:hellodigua/dsh-share#vX.Y.Z
+dsh plugin --profile web add github:luckykong/dsh-share#v0.6.0
 ```
 
 Install from a local checkout:
@@ -83,6 +90,10 @@ The development baseline is `@deepseek-ai/dsh 0.2.0-rc.2`, with a runtime depend
 - Copying an image requires clipboard permission. You can still download it if permission is unavailable.
 - Unreadable remote resources are replaced with transparent placeholders.
 - Only fully loaded Q&As can be selected. Scroll upward first to load older content.
+
+## Acknowledgements
+
+This project is a fork and extension of [hellodigua/dsh-share](https://github.com/hellodigua/dsh-share) under the MIT License. Special thanks to @hellodigua for the architecture and foundations.
 
 ## License
 

@@ -21,7 +21,7 @@ describe('DSH 插件清单', () => {
 
     expect(packageJson.name).toBe('dsh-share')
     expect(packageJson.private).toBeUndefined()
-    expect(packageJson.author).toBe('hellodigua')
+    expect(packageJson.author).toBe('luckykong')
     expect(packageJson.publishConfig).toEqual({
       access: 'public',
       registry: 'https://registry.npmjs.org/',
@@ -34,7 +34,7 @@ describe('DSH 插件清单', () => {
     expect(packageJson.files).toContain('README.en.md')
     expect(packageJson.files).toContain('CHANGELOG.md')
     expect(packageJson.files).toContain('assets/readme')
-    expect(packageJson.repository.url).toBe('git+https://github.com/hellodigua/dsh-share.git')
+    expect(packageJson.repository.url).toBe('git+https://github.com/luckykong/dsh-share.git')
     expect(packageJson.scripts.verify).toContain('pnpm typecheck')
     expect(packageJson.scripts.prepack).toBe('pnpm run build')
     expect(packageJson.scripts['release:check']).toContain('scripts/check-package.mjs')
