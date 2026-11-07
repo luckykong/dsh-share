@@ -109,40 +109,56 @@ describe('Gist API 调用', () => {
     })).rejects.toThrow(/Bad credentials/)
   })
 
-  it('列表获取并正确过滤出 DSH 相关的 Secret Gists', async () => {
-    globalThis.fetch = vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => [
-        {
-          id: 'gist_dsh_1',
-          description: '[DSH Share] 会话 A',
-          html_url: 'https://gist.github.com/user/gist_dsh_1',
-          created_at: '2026-11-06T10:00:00Z',
-          files: { 'dsh-session-a.md': { filename: 'dsh-session-a.md' } },
-        },
-        {
-          id: 'gist_other',
-          description: 'My ordinary private note',
-          html_url: 'https://gist.github.com/user/gist_other',
-          created_at: '2026-11-06T11:00:00Z',
-          files: { 'note.txt': { filename: 'note.txt' } },
-        },
-        {
-          id: 'gist_dsh_2',
-          description: null,
-          html_url: 'https://gist.github.com/user/gist_dsh_2',
-          created_at: '2026-11-06T12:00:00Z',
-          files: { 'dsh-20261106-120000.md': { filename: 'dsh-20261106-120000.md' } },
-        },
-      ],
-    }) as unknown as Response)
+  it('列表获取并正确过滤出 DSH 相关的 Secret Gists，且不发送破坏 CORS 的请求头', async () => {
+    let capturedUrl = ''
+    let capturedOptions: RequestInit | undefined
+
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      capturedUrl = String(input)
+      capturedOptions = init
+      return {
+        ok: true,
+        status: 200,
+        json: async () => [
+          {
+            id: 'gist_dsh_1',
+            description: '[DSH Share] 会话 A',
+            html_url: 'https://gist.github.com/user/gist_dsh_1',
+            created_at: '2026-11-06T10:00:00Z',
+            files: { 'dsh-session-a.md': { filename: 'dsh-session-a.md' } },
+          },
+          {
+            id: 'gist_other',
+            description: 'My ordinary private note',
+            html_url: 'https://gist.github.com/user/gist_other',
+            created_at: '2026-11-06T11:00:00Z',
+            files: { 'note.txt': { filename: 'note.txt' } },
+          },
+          {
+            id: 'gist_dsh_2',
+            description: null,
+            html_url: 'https://gist.github.com/user/gist_dsh_2',
+            created_at: '2026-11-06T12:00:00Z',
+            files: { 'dsh-20261106-120000.md': { filename: 'dsh-20261106-120000.md' } },
+          },
+        ],
+      } as unknown as Response
+    })
 
     const list = await listSecretGists('ghp_token')
     expect(list.length).toBe(2)
     expect(list[0]?.id).toBe('gist_dsh_1')
     expect(list[0]?.title).toBe('会话 A')
     expect(list[1]?.id).toBe('gist_dsh_2')
+
+    // 验证包含时间戳防缓存
+    expect(capturedUrl).toContain('https://api.github.com/gists?per_page=100&_t=')
+
+    // 验证严格不包含破坏 CORS 的 Cache-Control 或 Pragma
+    const headers = (capturedOptions?.headers ?? {}) as Record<string, string>
+    expect(headers['Cache-Control']).toBeUndefined()
+    expect(headers['Pragma']).toBeUndefined()
+    expect(headers['Authorization']).toBe('Bearer ghp_token')
   })
 
   it('彻底删除 Gist 发送 DELETE 请求并在 204 或 404 时成功解析', async () => {

@@ -2,9 +2,7 @@ import {
   clearGithubToken,
   deleteGist,
   listSecretGists,
-  loadDeletedGistIds,
   loadGithubToken,
-  recordDeletedGistId,
   saveGithubToken,
   type GistItem,
 } from './gist.ts'
@@ -119,6 +117,18 @@ export class GistDialog {
     return this.currentToken
   }
 
+  /** 分享成功后直接追加新创建的 Gist 到顶部，保证即刻可见。 */
+  prependGist(item: GistItem): void {
+    const emptyNotice = this.listContainer.querySelector('.dsh-gist-dialog__empty')
+    if (emptyNotice) {
+      this.listContainer.innerHTML = ''
+    }
+    // 避免重复追加
+    if (this.listContainer.querySelector(`[data-gist-id="${item.id}"]`)) return
+    const row = this.createItemRow(item)
+    this.listContainer.prepend(row)
+  }
+
   private updateCopy(): Translation {
     const strings = t(this.options.getLocale())
     this.titleElement.textContent = strings.gistTitle
@@ -212,6 +222,7 @@ export class GistDialog {
     }
     if (this.loading) return
     this.loading = true
+    this.refreshButton.disabled = true
     const strings = t(this.options.getLocale())
     this.listContainer.innerHTML = `<div class="dsh-gist-dialog__loading">${strings.gistLoading}</div>`
 
@@ -223,73 +234,76 @@ export class GistDialog {
       this.listContainer.innerHTML = `<div class="dsh-gist-dialog__error">${message}</div>`
     } finally {
       this.loading = false
+      this.refreshButton.disabled = false
     }
+  }
+
+  private createItemRow(item: GistItem): HTMLElement {
+    const strings = t(this.options.getLocale())
+    const row = this.document.createElement('div')
+    row.className = 'dsh-gist-dialog__item'
+    row.dataset.gistId = item.id
+
+    const info = this.document.createElement('div')
+    info.className = 'dsh-gist-dialog__item-info'
+
+    const titleLine = this.document.createElement('div')
+    titleLine.className = 'dsh-gist-dialog__item-title'
+    titleLine.textContent = item.title
+
+    const metaLine = this.document.createElement('div')
+    metaLine.className = 'dsh-gist-dialog__item-meta'
+    metaLine.textContent = `${formatDate(item.createdAt, this.options.getLocale())} · ${item.fileName}`
+
+    info.append(titleLine, metaLine)
+
+    const actions = this.document.createElement('div')
+    actions.className = 'dsh-gist-dialog__item-actions'
+
+    // 打开链接
+    const openBtn = this.document.createElement('a')
+    openBtn.className = 'dsh-gist-dialog__action-link'
+    openBtn.href = item.htmlUrl
+    openBtn.target = '_blank'
+    openBtn.rel = 'noreferrer noopener'
+    openBtn.textContent = strings.gistOpen
+
+    // 复制链接
+    const copyBtn = this.document.createElement('button')
+    copyBtn.type = 'button'
+    copyBtn.className = 'dsh-gist-dialog__btn dsh-gist-dialog__btn--sm'
+    copyBtn.textContent = strings.gistCopyLink
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await this.document.defaultView?.navigator.clipboard?.writeText(item.htmlUrl)
+        this.showStatus(strings.gistLinkCopied)
+      } catch {
+        this.showStatus(item.htmlUrl)
+      }
+    })
+
+    // 彻底删除（二次确认弹窗）
+    const deleteBtn = this.document.createElement('button')
+    deleteBtn.type = 'button'
+    deleteBtn.className = 'dsh-gist-dialog__btn dsh-gist-dialog__btn--sm dsh-gist-dialog__btn--danger'
+    deleteBtn.textContent = strings.gistDelete
+    deleteBtn.addEventListener('click', () => void this.handleDelete(item, row, deleteBtn))
+
+    actions.append(openBtn, copyBtn, deleteBtn)
+    row.append(info, actions)
+    return row
   }
 
   private renderList(items: GistItem[]): void {
     const strings = t(this.options.getLocale())
-    const deletedIds = loadDeletedGistIds(this.storage)
-    const visibleItems = items.filter(item => !deletedIds.has(item.id))
-
-    if (visibleItems.length === 0) {
+    if (items.length === 0) {
       this.listContainer.innerHTML = `<div class="dsh-gist-dialog__empty">${strings.gistEmpty}</div>`
       return
     }
 
     this.listContainer.innerHTML = ''
-    for (const item of visibleItems) {
-      const row = this.document.createElement('div')
-      row.className = 'dsh-gist-dialog__item'
-      row.dataset.gistId = item.id
-
-      const info = this.document.createElement('div')
-      info.className = 'dsh-gist-dialog__item-info'
-
-      const titleLine = this.document.createElement('div')
-      titleLine.className = 'dsh-gist-dialog__item-title'
-      titleLine.textContent = item.title
-
-      const metaLine = this.document.createElement('div')
-      metaLine.className = 'dsh-gist-dialog__item-meta'
-      metaLine.textContent = `${formatDate(item.createdAt, this.options.getLocale())} · ${item.fileName}`
-
-      info.append(titleLine, metaLine)
-
-      const actions = this.document.createElement('div')
-      actions.className = 'dsh-gist-dialog__item-actions'
-
-      // 打开链接
-      const openBtn = this.document.createElement('a')
-      openBtn.className = 'dsh-gist-dialog__action-link'
-      openBtn.href = item.htmlUrl
-      openBtn.target = '_blank'
-      openBtn.rel = 'noreferrer noopener'
-      openBtn.textContent = strings.gistOpen
-
-      // 复制链接
-      const copyBtn = this.document.createElement('button')
-      copyBtn.type = 'button'
-      copyBtn.className = 'dsh-gist-dialog__btn dsh-gist-dialog__btn--sm'
-      copyBtn.textContent = strings.gistCopyLink
-      copyBtn.addEventListener('click', async () => {
-        try {
-          await this.document.defaultView?.navigator.clipboard?.writeText(item.htmlUrl)
-          this.showStatus(strings.gistLinkCopied)
-        } catch {
-          this.showStatus(item.htmlUrl)
-        }
-      })
-
-      // 彻底删除
-      const deleteBtn = this.document.createElement('button')
-      deleteBtn.type = 'button'
-      deleteBtn.className = 'dsh-gist-dialog__btn dsh-gist-dialog__btn--sm dsh-gist-dialog__btn--danger'
-      deleteBtn.textContent = strings.gistDelete
-      deleteBtn.addEventListener('click', () => void this.handleDelete(item, row, deleteBtn))
-
-      actions.append(openBtn, copyBtn, deleteBtn)
-      row.append(info, actions)
-      this.listContainer.append(row)
+    for (const item of items) {
+      this.listContainer.append(this.createItemRow(item))
     }
   }
 
@@ -309,7 +323,6 @@ export class GistDialog {
 
     try {
       await deleteGist(this.currentToken, item.id)
-      recordDeletedGistId(this.storage, item.id)
       row.remove()
       this.showStatus(strings.gistDeleted)
       if (this.listContainer.children.length === 0) {

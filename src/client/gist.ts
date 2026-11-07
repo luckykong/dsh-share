@@ -1,7 +1,6 @@
 import { createDownloadFilename } from './filename.ts'
 
 export const GITHUB_TOKEN_STORAGE_KEY = 'dsh-share.github-token'
-export const DELETED_GISTS_STORAGE_KEY = 'dsh-share.deleted-gists'
 export const GIST_MARKER = '[DSH Share]'
 
 export interface GistItem {
@@ -17,30 +16,6 @@ export interface CreateGistOptions {
   title?: string
   markdown: string
   signal?: AbortSignal
-}
-
-export function loadDeletedGistIds(storage?: Storage): Set<string> {
-  if (!storage) return new Set()
-  try {
-    const raw = storage.getItem(DELETED_GISTS_STORAGE_KEY)
-    if (!raw) return new Set()
-    const list = JSON.parse(raw)
-    return new Set(Array.isArray(list) ? list : [])
-  } catch {
-    return new Set()
-  }
-}
-
-export function recordDeletedGistId(storage: Storage | undefined, gistId: string): void {
-  if (!storage) return
-  try {
-    const current = loadDeletedGistIds(storage)
-    current.add(gistId)
-    const array = Array.from(current).slice(-200)
-    storage.setItem(DELETED_GISTS_STORAGE_KEY, JSON.stringify(array))
-  } catch {
-    // 忽略异常
-  }
 }
 
 export function loadGithubToken(storage?: Storage): string {
@@ -140,16 +115,11 @@ export async function listSecretGists(
   const cleanToken = token.trim()
   if (!cleanToken) throw new Error('Missing GitHub token')
 
-  // 加入时间戳并指定 cache: 'no-store'，彻底规避浏览器和网络代理对 GET 请求的缓存
+  // 使用动态时间戳 URL 参数击穿缓存；严格只使用 GitHub CORS 允许的标准请求头，防止预检拦截
   const url = `https://api.github.com/gists?per_page=100&_t=${Date.now()}`
   const response = await fetch(url, {
     method: 'GET',
-    cache: 'no-store',
-    headers: {
-      ...githubHeaders(cleanToken),
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Pragma: 'no-cache',
-    },
+    headers: githubHeaders(cleanToken),
     signal,
   })
 

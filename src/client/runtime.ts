@@ -616,6 +616,7 @@ export function createShareRuntime(document: Document, options: InstallOptions =
       try {
         const markdown = createShareMarkdown(messages, locale, ensureDialog().settings)
         const result = await createSecretGist(gistDlg.token, { title, markdown })
+        gistDlg.prependGist(result)
         if (!footer.isConnected) return
         try {
           await document.defaultView?.navigator.clipboard?.writeText(result.htmlUrl)

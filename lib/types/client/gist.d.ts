@@ -1,5 +1,4 @@
 export declare const GITHUB_TOKEN_STORAGE_KEY = "dsh-share.github-token";
-export declare const DELETED_GISTS_STORAGE_KEY = "dsh-share.deleted-gists";
 export declare const GIST_MARKER = "[DSH Share]";
 export interface GistItem {
     id: string;
@@ -14,8 +13,6 @@ export interface CreateGistOptions {
     markdown: string;
     signal?: AbortSignal;
 }
-export declare function loadDeletedGistIds(storage?: Storage): Set<string>;
-export declare function recordDeletedGistId(storage: Storage | undefined, gistId: string): void;
 export declare function loadGithubToken(storage?: Storage): string;
 export declare function saveGithubToken(storage: Storage | undefined, token: string): void;
 export declare function clearGithubToken(storage?: Storage): void;

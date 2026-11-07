@@ -1,3 +1,4 @@
+import { type GistItem } from './gist.ts';
 import { type ShareLocale } from './i18n.ts';
 export interface GistDialogOptions {
     getLocale(): ShareLocale;
@@ -22,6 +23,8 @@ export declare class GistDialog {
     private loading;
     constructor(document: Document, options: GistDialogOptions);
     get token(): string;
+    /** 分享成功后直接追加新创建的 Gist 到顶部，保证即刻可见。 */
+    prependGist(item: GistItem): void;
     private updateCopy;
     private updateTokenUI;
     private handleSaveToken;
@@ -31,6 +34,7 @@ export declare class GistDialog {
     close(): void;
     destroy(): void;
     loadList(): Promise<void>;
+    private createItemRow;
     private renderList;
     private handleDelete;
 }
