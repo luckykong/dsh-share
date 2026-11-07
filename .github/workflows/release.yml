@@ -71,6 +71,7 @@ jobs:
           TARBALL="$(npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP")"
           echo "path=$RUNNER_TEMP/$TARBALL" >> "$GITHUB_OUTPUT"
       - name: 发布到 npm
+        if: ${{ env.ENABLE_NPM_PUBLISH == 'true' }}
         run: npm publish "$TARBALL" --provenance --access public --tag "$NPM_TAG"
         env:
           TARBALL: ${{ steps.package.outputs.path }}
@@ -87,7 +88,11 @@ jobs:
           if [[ "$PRERELEASE" == "true" ]]; then
             RELEASE_ARGS+=(--prerelease)
           fi
-          gh release create "${RELEASE_ARGS[@]}"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$TARBALL" --clobber
+          else
+            gh release create "${RELEASE_ARGS[@]}"
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
           TARBALL: ${{ steps.package.outputs.path }}
